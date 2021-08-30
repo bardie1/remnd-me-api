@@ -7,6 +7,7 @@ const port: number = 4141;
 const users = require("./routes/users");
 const auth = require("./routes/auth");
 const phoneNumbers = require("./routes/phoneNumbers");
+const reminders = require("./routes/reminders");
 
 import { TwilioUtil } from "./utils/twilioUtil";
 import { SMSVerificationSchedule } from './schedules/sendVerificationCodes';
@@ -26,6 +27,7 @@ app.get("/", async (req: Request, res: Response): Promise<Response> => {
 app.use("/users", users);
 app.use("/auth", auth);
 app.use("/phone-numbers", phoneNumbers);
+app.use("/reminders", reminders);
 
 const scheduler = new SMSVerificationSchedule();
 scheduler.start();
