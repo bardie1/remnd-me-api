@@ -32,7 +32,7 @@ const updateReminder = (reminder: Reminder) : Promise<any> => {
             }
 
             resolve( results.rows[0])
-        })
+        });
     });
 }
 
@@ -44,8 +44,8 @@ const getReminderByExternalRef = (reminderExternalRef: string): Promise<any> => 
             }
 
             resolve(results.rows[0]);
-        })
-    })
+        });
+    });
 }
 
 const getRemindersForUser = (userExternalRef: string) : Promise<any> => {
@@ -68,8 +68,36 @@ const deleteReminder = (reminderExternalRef: string) : Promise<any> => {
             }
 
             resolve(results.rows[0]);
-        })
-    })
+        });
+    });
+}
+
+const getUnsentReminders = (): Promise<any> => {
+    let date = new Date();
+    let pastDate = new Date( Date.now() - 1000 * 600 );
+    let newDate = date.toISOString().replace("T", " ").replace("Z", "");
+    let newPastDate = pastDate.toISOString().replace("T", " ").replace("Z", "");
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * FROM reminders WHERE sent_date IS NULL AND remind_date_time BETWEEN $1 AND $2", [newPastDate, newDate], (err, results) => {
+            if (err) {
+                reject (new Error (err.message));
+            }
+
+            resolve(results.rows);
+        });
+    });
+}
+
+const markAsSent = (externalRef: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        pool.query("UPDATE reminders SET sent_date = NOW() WHERE external_ref = $1 RETURNING *", [externalRef], (err, results) => {
+            if (err) {
+                reject(new Error(err.message));
+            }
+
+            resolve(results.rows[0]);
+        });
+    });
 }
 
 
@@ -79,7 +107,9 @@ const remindersDb = {
     updateReminder,
     getRemindersForUser,
     deleteReminder,
-    getReminderByExternalRef
+    getReminderByExternalRef,
+    getUnsentReminders,
+    markAsSent
 }
 
 export default remindersDb;

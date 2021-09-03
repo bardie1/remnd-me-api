@@ -11,6 +11,7 @@ const reminders = require("./routes/reminders");
 
 import { TwilioUtil } from "./utils/twilioUtil";
 import { SMSVerificationSchedule } from './schedules/sendVerificationCodes';
+import { SendReminderSchedule } from './schedules/sendReminders';
 
 app.use(express.json());
 app.use(express.urlencoded({
@@ -31,6 +32,10 @@ app.use("/reminders", reminders);
 
 const scheduler = new SMSVerificationSchedule();
 scheduler.start();
+
+const reminderScheduler = new SendReminderSchedule();
+reminderScheduler.start();
+
 
 try {
     app.listen(port, (): void => {
