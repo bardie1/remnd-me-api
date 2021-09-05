@@ -4,24 +4,24 @@ const router: Router = express.Router();
 const verifyToken = require("../middleware/jwt");
 import phoneDb from "../db/phoneNumbers";
 import { GenerateUtil } from '../utils/generateUtil';
+import { ErrorResponse } from '../models/errorResponse';
 
 router.get("/:id", verifyToken, async (req: Request, res: Response) => {
     try {
         const phone = await phoneDb.getPhoneNumberByExternalRef(req.params.id);
         const user = req.body.user;
         let dtoPhone: PhoneNumberDto;
-        if (phone) {
-            dtoPhone = PhoneNumberDto.dloToDto(phone);
-            if (dtoPhone.userId !== user.externalRef) {
-                throw new Error ("Unauthorized!");
-            }
-        } else {
-            throw new Error ("No Phone found");
+        if (!phone) {
+            res.status(404).json(new ErrorResponse("No Phone found"));
         }
-
-        res.status(200).send(dtoPhone);
+        
+        dtoPhone = PhoneNumberDto.dloToDto(phone);
+        if (dtoPhone.userId !== user.externalRef) {
+            res.status(403).json(new ErrorResponse("You are unauthorized to access this resource"));
+        }
+        res.status(200).json(dtoPhone);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(400).json(new ErrorResponse(err.message));
     }
 });
 
@@ -32,16 +32,15 @@ router.post("/", verifyToken , async (req: Request, res: Response) => {
         const newPhone = new PhoneNumberDto(req.body);
         const addedPhone = await phoneDb.insertPhoneNumber(newPhone);
         let dtoPhone: PhoneNumberDto;
-        if (addedPhone) {
-           dtoPhone = PhoneNumberDto.dloToDto(addedPhone);
-        } else {
-            throw new Error ("Unable to add phone");
+        if (!addedPhone) {
+            res.status(400).json(new ErrorResponse("Unable to add phone"));
         }
+        dtoPhone = PhoneNumberDto.dloToDto(addedPhone);
 
-        res.status(200).send(dtoPhone);
+        res.status(202).json(dtoPhone);
 
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(400).json(new ErrorResponse(err.message));
     }
 })
 
@@ -58,12 +57,13 @@ router.post("/send-verification-code", verifyToken, async (req: Request, res: Re
         const userId = req.body.user.externalRef;
         let phone = await phoneDb.getPhoneNumberByExternalRef(phoneToSendTo.externalRef);
     
-        if (phone) {
-            phoneToSendTo = PhoneNumberDto.dloToDto(phone);
+        if (!phone) {
+            res.status(404).json(new ErrorResponse("Unable to find this resource"));
         }
-    
+        
+        phoneToSendTo = PhoneNumberDto.dloToDto(phone);
         if (phoneToSendTo.userId !== userId) {
-            throw new Error ("Unauthorized!");
+            res.status(403).json(new ErrorResponse("You are unauthorized to access this resource"));
         }
         //Create a 6 digit random code 
         let digString = GenerateUtil.generateVerificationCode();
@@ -71,9 +71,9 @@ router.post("/send-verification-code", verifyToken, async (req: Request, res: Re
         // add entry to the queue database
         await phoneDb.addVerificationToQueue(phoneToSendTo.externalRef, phoneToSendTo.phoneNumber, digString);
 
-        res.status(200).send("Success")
+        res.status(200).json({success: true})
     } catch (error) {
-        res.status(400).send("Failed")
+        res.status(400).json(new ErrorResponse(error.message));
     }
 });
 
@@ -85,27 +85,28 @@ router.post("/verify", verifyToken, async (req: Request, res: Response) => {
     
         let phoneToVerify = await phoneDb.getPhoneNumberByExternalRef(phone.externalRef);
     
-        if (phoneToVerify) {
-            phone = PhoneNumberDto.dloToDto(phoneToVerify);
-        } else {
-            throw new Error ();
+        if (!phoneToVerify) {
+            res.status(404).json(new ErrorResponse("Unable to find resource"));
         }
 
+        phone = PhoneNumberDto.dloToDto(phoneToVerify);
+        
         let updateRes;
     
         if (code === phone.verificationCode) {
            updateRes = await phoneDb.updatePhoneVerificationStatus(phone.externalRef, true);
         } else {
-            throw new Error("Incorrect Code");
+            res.status(200).json({verified: false});
         }
         
-        if (updateRes) {
-            phone = PhoneNumberDto.dloToDto(updateRes);
+        if (!updateRes) {
+            res.status(400).json(new ErrorResponse("Unable to update verification status"))
         }
-
-        res.status(200).send(phone)
+        
+        phone = PhoneNumberDto.dloToDto(updateRes);
+        res.status(200).json(phone)
     } catch (error) {
-        res.status(400).send(error.message);
+        res.status(400).json(new ErrorResponse(error.message));
     }
 });
 

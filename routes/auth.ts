@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, Router } from 'express';
 import {AuthUtil} from '../utils/authUtil';
 import user from "../db/user";
+import { ErrorResponse } from '../models/errorResponse';
 const router: Router = express.Router();
 
 router.post("/login", async (req: Request, res: Response) => {
@@ -25,20 +26,16 @@ router.post("/login", async (req: Request, res: Response) => {
                 })
             } else {
                 res.status(401);
-                res.send({
-                    message: "Invalid Password"
-                })
+                res.send(new ErrorResponse("Login details are incorrect"));
             }
         } else {
             res.status(404);
-                res.send({
-                    message: "No username found"
-                })
+                res.send(new ErrorResponse("No Username Found"));
         }
 
     } catch (err) {
         res.status(400);
-        res.send(err.message);
+        res.json(new ErrorResponse(err.message));
     }
 })
 

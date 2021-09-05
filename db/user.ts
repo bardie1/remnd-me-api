@@ -73,7 +73,7 @@ const createUser = (username: string, password: string): Promise<any> => {
 
 const updateUser = (user: any) : Promise<any> => {
     return new Promise((resolve, reject) => {
-        pool.query('UPDATE users SET username = $1 WHERE external_ref = $2',[user.username, user.externalRef], async (error, results) => {
+        pool.query('UPDATE users SET username = $1 WHERE external_ref = $2 RETURNING *',[user.username, user.externalRef], async (error, results) => {
             if (error) {
                 reject (new Error(error.message));
             }
@@ -94,7 +94,7 @@ const deleteUser = (externalRef: string): Promise<any> => {
     })
 }
 
-const user = {
+const userDb = {
     getAllUsers,
     getUserByExternalRef,
     createUser,
@@ -103,4 +103,4 @@ const user = {
     getUserByUsername
 }
 
-export default user;
+export default userDb;

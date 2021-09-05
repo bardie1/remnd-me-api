@@ -3,6 +3,7 @@ import { Reminder } from '../models/reminder';
 import remindersDb from "../db/reminders";
 import { ObjectUtil } from '../utils/objectUtil';
 import user from '../db/user';
+import { ErrorResponse } from '../models/errorResponse';
 const verifyToken = require("../middleware/jwt");
 const router = express.Router();
 
@@ -19,12 +20,12 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
         let newReminder = await remindersDb.createReminder(reminder);
 
         if (!newReminder) {
-            throw new Error ("Unable to create reminder");
+            res.status(400).json(new ErrorResponse("Unable to create reminder"));
         }
 
         reminder = Reminder.dloToDto(newReminder);
 
-        res.status(200).send(reminder);
+        res.status(200).json(reminder);
 
     } catch (err) {
         res.status(400).send(err.message);
@@ -40,20 +41,20 @@ router.put("/", verifyToken, async (req: Request, res: Response) => {
         const user = req.body.user;
 
         if (user.externalRef !== reminder.userId) {
-            throw new Error("Unauthorized");
+            res.status(403).json( new ErrorResponse("Unauthorized"));
         }
     
         let updatedReminder = await remindersDb.updateReminder(reminder);
     
         if (!updatedReminder) {
-            throw new Error ("Unable to update reminder");
+            res.status(400).json(new ErrorResponse("Unable to update reminder")); 
         }
     
         reminder = Reminder.dloToDto(updatedReminder);
     
         res.status(200).send(reminder);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(400).json( new ErrorResponse(err.message));
     }
 });
 
@@ -64,23 +65,23 @@ router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
         let reminder = await remindersDb.getReminderByExternalRef(req.params.id);
         const user = req.body.user;
         if (!reminder) {
-            throw new Error ("Unable to Find Reminder");
+            res.status(404).json(new ErrorResponse("Reminder not found"));
         }
 
         let reminderDto = Reminder.dloToDto(reminder);
 
         if (reminderDto.userId !== user.externalRef) {
-            throw new Error ("Unauthorized");
+            res.status(403).json(new ErrorResponse("You are not authorized to access this resource"));
         }
 
         let deletedReminder = await remindersDb.deleteReminder(req.params.id);
         if (!deletedReminder) {
-            throw new Error("Unable to delete reminder");
+            res.status(400).json(new ErrorResponse("Unable to delete reminder"));
         }
 
         res.status(200).send(reminderDto);
     } catch (error) {
-        res.status(400).send(error.message);
+        res.status(400).json(new ErrorResponse(error.message));
     }
 });
 
@@ -90,17 +91,17 @@ router.get("/:id", verifyToken, async (req: Request, res: Response) => {
         let reminder = await remindersDb.getReminderByExternalRef(req.params.id);
         const user = req.body.user;
         if (!reminder) {
-            throw new Error ("Unable to Find Reminder");
+            res.status(404).json(new ErrorResponse("Unable to Find Reminder"));
         }
 
         let reminderDto:Reminder = Reminder.dloToDto(reminder);
         if (reminderDto.userId !== user.externalRef) {
-            throw new Error ("Unauthorized");
+            res.status(403).json(new ErrorResponse("You are unauthorized to access this resource"));
         }
 
         res.status(200).send(reminderDto);
     } catch (error) {
-        res.status(400).send(error.message);
+        res.status(400).json( new ErrorResponse(error.message));
     }
 });
 
@@ -112,7 +113,7 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
         let reminders:any[] = await remindersDb.getRemindersForUser(user.externalRef);
 
         if (!reminders) {
-            throw new Error("Unable to retrieve reminders");
+            res.status(400).json(new ErrorResponse("Unable to retrieve reminders"));
         }
 
         let rems: Reminder[] = reminders.map((r) => Reminder.dloToDto(r));
@@ -121,7 +122,7 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
 
 
     } catch (err) {
-        res.status(400).send(err.message)
+        res.status(400).json(new ErrorResponse(err.message));
     }
 });
 
