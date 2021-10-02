@@ -8,7 +8,6 @@ router.post("/login", async (req: Request, res: Response) => {
     try {
 
         const {username, password} = req.body;
-
         const loginUser = await user.getUserByUsername(username);
 
         if (loginUser) {
@@ -30,7 +29,7 @@ router.post("/login", async (req: Request, res: Response) => {
             }
         } else {
             res.status(404);
-                res.send(new ErrorResponse("No Username Found"));
+            res.send(new ErrorResponse("No Username Found"));
         }
 
     } catch (err) {

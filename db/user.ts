@@ -46,11 +46,7 @@ const getUserByUsername = (username: string): Promise<any> => {
             if (error) {
                 reject(new Error(error.message));
             }
-            
             if (results) {
-                if (results.rowCount === 0) {
-                    reject(new Error("No User Found"));
-                }
                 resolve(results.rows[0]);
             }  else {
                 reject(new Error("No User Found"));

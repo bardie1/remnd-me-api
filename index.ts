@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cors = require("cors");
 import express, { Application, Request, Response } from 'express';
 import * as cron from 'node-cron';
 const app: Application = express();
@@ -13,6 +14,7 @@ import { TwilioUtil } from "./utils/twilioUtil";
 import { SMSVerificationSchedule } from './schedules/sendVerificationCodes';
 import { SendReminderSchedule } from './schedules/sendReminders';
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({
         extended: true,
@@ -29,6 +31,16 @@ app.use("/users", users);
 app.use("/auth", auth);
 app.use("/phone-numbers", phoneNumbers);
 app.use("/reminders", reminders);
+
+var corsOptions = {
+    origin: function(origin:any, callback:any){
+        var originIsWhitelisted = true;
+        //whitelist.indexOf(origin) !== -1;
+        callback(null, originIsWhitelisted);
+    },
+    credentials: true
+  };
+  app.use(cors(corsOptions));
 
 const scheduler = new SMSVerificationSchedule();
 scheduler.start();
