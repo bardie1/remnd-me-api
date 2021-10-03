@@ -46,10 +46,10 @@ const getUserByUsername = (username: string): Promise<any> => {
             if (error) {
                 reject(new Error(error.message));
             }
-            if (results) {
+            if (results && results !== undefined) {
                 resolve(results.rows[0]);
             }  else {
-                reject(new Error("No User Found"));
+                resolve(null);
             }
         });
     });

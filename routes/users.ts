@@ -44,18 +44,21 @@ router.post("/", async (req: Request, res: Response) => {
     try {
         const { username, password } = req.body;
         const hashedPassword = await AuthUtil.hashPassword(password);
-
-        let newUser = await userDb.createUser(username, hashedPassword);
-
-        
-        if (!newUser) {
-            res.status(400).json(new ErrorResponse("Unable to create user"));
+        let existingUser = await userDb.getUserByUsername(username);
+        if (existingUser) {
+            res.status(400).json(new ErrorResponse("This username is already taken")).end();
+        } else {
+            let newUser = await userDb.createUser(username, hashedPassword);
+    
+            
+            if (!newUser) {
+                res.status(400).json(new ErrorResponse("Unable to create user"));
+            }
+            
+            let user = User.dloToDto(newUser);
+            res.status(202);
+            res.json(user);
         }
-        
-        let user = User.dloToDto(newUser);
-        res.status(202);
-        res.json(user);
-        
     } catch (err) {
         res.status(400).json(new ErrorResponse(err.message));
     }
