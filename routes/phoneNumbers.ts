@@ -26,6 +26,24 @@ router.get("/:id", verifyToken, async (req: Request, res: Response) => {
 });
 
 
+router.get("/", verifyToken, async (req: Request, res: Response) => {
+    try {
+        const user = req.body.user;
+        const phones: any[] = await phoneDb.getPhoneNumbersByUserId(user.externalRef);
+        let dtoPhones: PhoneNumberDto[] = [];
+        if (!phones || phones.length === 0) {
+            res.status(404).json(new ErrorResponse("No Phone found"));
+        }
+        
+        phones.forEach(p => dtoPhones.push(PhoneNumberDto.dloToDto(p)));
+        res.status(200).json(dtoPhones);
+        
+    } catch (err) {
+        res.status(400).json(new ErrorResponse(err.message));
+    }
+})
+
+
 router.post("/", verifyToken , async (req: Request, res: Response) => {
     try {
         req.body.userId = req.body.user.externalRef;

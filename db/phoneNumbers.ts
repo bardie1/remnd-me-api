@@ -61,6 +61,19 @@ const getPhoneNumberByExternalRef = (phoneExternalRef: string): Promise<any> => 
     })
 }
 
+
+const getPhoneNumbersByUserId = (userId: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        pool.query("SELECT * from phone_numbers WHERE user_id = $1", [userId], (error, results) => {
+            if (error) {
+                resolve(null);
+            }
+
+            resolve(results.rows);
+        })
+    })
+}
+
 const addVerificationToQueue = async (phoneId: string, phoneNumber:string, verificationCode: string): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -86,7 +99,8 @@ const phoneDb = {
     getPhoneNumberByExternalRef,
     addVerificationToQueue,
     updatePhoneVerificationCode,
-    updatePhoneVerificationStatus
+    updatePhoneVerificationStatus,
+    getPhoneNumbersByUserId
 }
 
 export default phoneDb;
