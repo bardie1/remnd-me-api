@@ -14,7 +14,7 @@ export class TwilioUtil {
         client.messages.create({
             body: body,
             from: twilioNumber,
-            to: toNumber
+            to: "+"+toNumber
     
         }).then((message:any) => verificationQueue.markAsSent(externalRef))
     }
@@ -23,7 +23,7 @@ export class TwilioUtil {
         client.messages.create({
             body: body,
             from: twilioNumber,
-            to: toNumber
+            to: "+"+toNumber
     
         }).then((message:any) => remindersDb.markAsSent(externalRef))
     }
