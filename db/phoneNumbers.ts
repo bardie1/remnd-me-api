@@ -35,6 +35,19 @@ const updatePhoneVerificationCode = (phoneId: string, verificationCode: string):
     });
 }
 
+const updatePhoneNumber = (phone: PhoneNumberDto): Promise<any>  => {
+    return new Promise((resolve, reject) => {
+        pool.query("UPDATE phone_numbers SET phone_number = $1 WHERE external_ref = $2 RETURNING *", [phone.phoneNumber, phone.externalRef], (err, results) => {
+            console.log(results);
+            if (err) {
+                reject (new Error(err.message));
+            }
+
+            resolve (results.rows[0]);
+        });
+    });
+}
+
 const updatePhoneVerificationStatus = (phoneId: string, verified: boolean): Promise<any> => {
     let verifiedStatus = (verified) ? 'TRUE' : "FALSE";
     return new Promise((resolve, reject) => {
@@ -100,7 +113,8 @@ const phoneDb = {
     addVerificationToQueue,
     updatePhoneVerificationCode,
     updatePhoneVerificationStatus,
-    getPhoneNumbersByUserId
+    getPhoneNumbersByUserId,
+    updatePhoneNumber
 }
 
 export default phoneDb;

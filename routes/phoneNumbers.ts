@@ -63,7 +63,21 @@ router.post("/", verifyToken , async (req: Request, res: Response) => {
 })
 
 router.put("/", verifyToken, async (req: Request, res: Response) => {
-    
+    try {
+        req.body.userId = req.body.user.externalRef;
+        const phone = new PhoneNumberDto(req.body);
+        const updatedPhone = await phoneDb.updatePhoneNumber(phone);
+        let dtoPhone: PhoneNumberDto;
+        if (!updatedPhone) {
+            res.status(400).json(new ErrorResponse("Unable to add phone"));
+        }
+        dtoPhone = PhoneNumberDto.dloToDto(updatedPhone);
+
+        res.status(202).json(dtoPhone);
+
+    } catch (err) {
+        res.status(400).json(new ErrorResponse(err.message));
+    }
 })
 
 router.post("/send-verification-code", verifyToken, async (req: Request, res: Response) => {
